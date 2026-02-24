@@ -9,7 +9,11 @@ const jobSchema = new mongoose.Schema({
     pay: { type: String, required: true, trim: true },
     companyName: { type: String, required: true, trim: true },
     companyLocation: { type: String, required: true, trim: true },
-    statusOfJob: { type: String, required: true, trim: true },
+    statusOfJob: {
+    type: String,
+    enum: ['Open', 'Closed'],
+    default: 'Open'
+    },
     isSaved: { type: Boolean, default: false },
     workingHours: { type: String, required: true, trim: true },
     qualifications: { type: String, required: true },

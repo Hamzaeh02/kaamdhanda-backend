@@ -31,8 +31,13 @@ const workerSchema = new mongoose.Schema({
   cnicBack: { type: String, default: null },
   cvFile: { type: String, default: null },
 
-  // Referral
-  referalCode: { type: String, trim: true, default: null }
+  // Referral system
+  referalCode: { type: String, trim: true, default: null }, // code used by this worker
+  userReferralCode: { type: String, unique: true },         // worker's own code
+
+  // Wallet / Balance
+  balance: { type: Number, default: 0 }
+
 }, { timestamps: true });
 
 const Worker = mongoose.model('Worker', workerSchema);

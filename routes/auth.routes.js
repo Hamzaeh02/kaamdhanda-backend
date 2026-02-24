@@ -1,13 +1,18 @@
 const express = require('express');
 const router = express.Router();
 const upload = require('../middleware/upload');
+const protect = require('../middleware/auth.middleware');
 const {
   registerUser,
   registerEmployer,
   loginUser,
-  loginWorker,       // keep existing Worker login route
-  sendOtp,
-  verifyOtp
+  loginWorker,
+  verifyOtp,
+  addWorkerReferral,
+  verifyWorkerOtp,
+  forgotPassword,
+  resetPassword,
+  verifyResetOtp, 
 } = require('../controllers/auth.controller');
 
 // =======================
@@ -38,13 +43,31 @@ router.post(
 // =======================
 // Existing login routes
 // =======================
-router.post('/login', loginUser);          // user/employer email-password login
-router.post('/login-worker', loginWorker); // existing Worker login
+router.post('/login', loginUser);
+router.post('/login-worker', loginWorker);
 
 // =======================
-// OTP login / verification routes (all types: User, Employer, Worker)
+// OTP login / verification routes
 // =======================
-router.post('/otp/send', sendOtp);       // send OTP
-router.post('/otp/verify', verifyOtp);   // verify OTP
+// router.post('/otp/send', sendOtp);
+router.post('/otp/verify', verifyOtp);
+
+// =======================
+// ✅ Worker Referral Route (ADDED ONLY)
+// =======================
+router.post(
+  '/worker/add-referral',
+  protect,
+  addWorkerReferral
+);
+
+router.post(
+  '/worker/verify-otp',
+  verifyWorkerOtp
+);
+
+router.post('/forgot-password', forgotPassword);
+router.post('/reset-password', resetPassword);
+router.post('/verify-reset-otp', verifyResetOtp);
 
 module.exports = router;

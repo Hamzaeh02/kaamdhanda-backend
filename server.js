@@ -20,6 +20,7 @@ app.use('/api/auth', require('./routes/auth.routes'));
 app.use('/api/jobs', require('./routes/job.routes'));
 app.use('/api/tasks', require('./routes/task.routes'));
 app.use('/api/saveJobs', require('./routes/saveJob.routes'));
+app.use('/api/applications', require('./routes/jobApplication.routes'));
 
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`🚀 Server running on port ${PORT}`);

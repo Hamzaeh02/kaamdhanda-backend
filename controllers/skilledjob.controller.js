@@ -60,7 +60,7 @@ exports.createJob = async (req, res) => {
       roleSummary,
       responsibilityOfEmployee,
       AboutCompany,
-      user: req.user.id,
+      employer: req.user.id,
     });
 
     await job.save();
@@ -86,14 +86,37 @@ exports.createJob = async (req, res) => {
 // Get all job postings
 exports.getAllJobs = async (req, res) => {
   try {
-    const jobs = await Job.find();
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+
+    // default: Open jobs
+    const status = req.query.status || 'Open';
+
+    const filter = { statusOfJob: status };
+
+    const totalJobs = await Job.countDocuments(filter);
+
+    const jobs = await Job.find(filter)
+      .skip(skip)
+      .limit(limit)
+      .sort({ createdAt: -1 });
 
     return sendResponse(res, {
       success: true,
-      message: 'Jobs fetched successfully',
-      data: jobs,
+      message: `${status} jobs fetched successfully`,
+      data: {
+        jobs,
+        pagination: {
+          totalJobs,
+          currentPage: page,
+          totalPages: Math.ceil(totalJobs / limit),
+          limit,
+        }
+      },
       statusCode: 200
     });
+
   } catch (error) {
     return sendResponse(res, {
       success: false,
@@ -103,6 +126,85 @@ exports.getAllJobs = async (req, res) => {
     });
   }
 };
+
+
+exports.getAllRecommendedJobs = async (req, res) => {
+  try {
+    const { title } = req.query;
+
+    if (!title) {
+      return sendResponse(res, {
+        success: false,
+        message: 'Title is required',
+        statusCode: 400
+      });
+    }
+
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+
+    const filter = {
+      jobTitle: { $regex: title, $options: 'i' },
+      statusOfJob: 'Open' // ✅ only open jobs
+    };
+
+    const recommendedJobs = await Job.find(filter)
+      .skip(skip)
+      .limit(limit)
+      .sort({ createdAt: -1 });
+
+    const totalRecommended = await Job.countDocuments(filter);
+
+    return sendResponse(res, {
+      success: true,
+      message: 'Recommended open jobs fetched successfully',
+      data: {
+        jobs: recommendedJobs,
+        pagination: {
+          totalJobs: totalRecommended,
+          currentPage: page,
+          totalPages: Math.ceil(totalRecommended / limit),
+          limit,
+        }
+      },
+      statusCode: 200
+    });
+
+  } catch (error) {
+    return sendResponse(res, {
+      success: false,
+      message: 'Server error',
+      errors: error.message,
+      statusCode: 500
+    });
+  }
+};
+
+
+exports.getClosedJobs = async (req, res) => {
+  try {
+    const jobs = await Job.find({ statusOfJob: 'Closed' })
+      .sort({ createdAt: -1 });
+
+    return sendResponse(res, {
+      success: true,
+      message: 'Closed jobs fetched successfully',
+      data: jobs,
+      statusCode: 200
+    });
+
+  } catch (error) {
+    return sendResponse(res, {
+      success: false,
+      message: 'Server error',
+      errors: error.message,
+      statusCode: 500
+    });
+  }
+};
+
+
 
 // Get a single job posting by ID
 exports.getJobById = async (req, res) => {
@@ -133,17 +235,36 @@ exports.getJobById = async (req, res) => {
   }
 };
 
-// Get jobs created by logged-in user
-exports.getMyJobs = async (req, res) => {
+
+// Get jobs created by logged-in employer
+exports.getMyEmployerJobs = async (req, res) => {
   try {
-    const jobs = await Job.find({ user: req.user.id });
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+
+    const totalJobs = await Job.countDocuments({ employer: req.user.id });
+
+    const jobs = await Job.find({ employer: req.user.id })
+      .skip(skip)
+      .limit(limit)
+      .sort({ createdAt: -1 });
 
     return sendResponse(res, {
       success: true,
-      message: 'My jobs fetched successfully',
-      data: jobs,
+      message: 'My employer jobs fetched successfully',
+      data: {
+        jobs,
+        pagination: {
+          totalJobs,
+          currentPage: page,
+          totalPages: Math.ceil(totalJobs / limit),
+          limit,
+        }
+      },
       statusCode: 200
     });
+
   } catch (error) {
     return sendResponse(res, {
       success: false,
@@ -153,6 +274,7 @@ exports.getMyJobs = async (req, res) => {
     });
   }
 };
+
 
 // Update a job posting by ID
 exports.updateJob = async (req, res) => {
@@ -214,3 +336,87 @@ exports.deleteJob = async (req, res) => {
     });
   }
 };
+
+// Toggle job status (Open <-> Closed)
+exports.toggleJobStatus = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const job = await Job.findById(id);
+
+    if (!job) {
+      return sendResponse(res, {
+        success: false,
+        message: 'Job not found',
+        statusCode: 404,
+      });
+    }
+
+    // 🔒 optional: sirf job ka owner toggle kar sakta hai
+    if (job.employer.toString() !== req.user.id) {
+      return sendResponse(res, {
+        success: false,
+        message: 'Not authorized to change job status',
+        statusCode: 403,
+      });
+    }
+
+    // 🔁 toggle logic
+    job.statusOfJob = job.statusOfJob === 'Open' ? 'Closed' : 'Open';
+
+    await job.save();
+
+    return sendResponse(res, {
+      success: true,
+      message: `Job status changed to ${job.statusOfJob}`,
+      data: job,
+      statusCode: 200,
+    });
+
+  } catch (error) {
+    return sendResponse(res, {
+      success: false,
+      message: 'Server error',
+      errors: error.message,
+      statusCode: 500,
+    });
+  }
+};
+
+
+// // Toggle job's isSaved status
+// exports.toggleJobSaved = async (req, res) => {
+//   try {
+//     const { id } = req.params;
+
+//     const job = await Job.findById(id);
+
+//     if (!job) {
+//       return sendResponse(res, {
+//         success: false,
+//         message: 'Job not found',
+//         statusCode: 404,
+//       });
+//     }
+
+//     // 🔁 toggle logic
+//     job.isSaved = !job.isSaved;
+
+//     await job.save();
+
+//     return sendResponse(res, {
+//       success: true,
+//       message: `Job saved status changed to ${job.isSaved}`,
+//       data: { jobId: job._id, isSaved: job.isSaved },
+//       statusCode: 200,
+//     });
+
+//   } catch (error) {
+//     return sendResponse(res, {
+//       success: false,
+//       message: 'Server error',
+//       errors: error.message,
+//       statusCode: 500,
+//     });
+//   }
+// };

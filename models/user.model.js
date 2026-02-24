@@ -9,7 +9,7 @@ const userSchema = new mongoose.Schema({
   email: { type: String, required: true, unique: true, lowercase: true, trim: true },
   referalCode: { type: String, trim: true, default: null },
   userReferralCode: { type: String, unique: true },
-   phoneNo: { type: Number, required: true, unique: true,},
+  phoneNo: { type: Number, required: true, unique: true,},
   dateOfBirth: { type: Date, required: true, },
   gender: { type: String, required: true, trim: true },
   password: { type: String, required: true },
@@ -30,6 +30,10 @@ const userSchema = new mongoose.Schema({
   cnicFront: { type: String, default: null },
   cnicBack: { type: String, default: null },
   cvFile: { type: String, default: null },
+
+  otp: { type: String },
+  otpExpire: { type: Date },
+
 }, { timestamps: true });
 
 userSchema.pre('save', async function (next) {

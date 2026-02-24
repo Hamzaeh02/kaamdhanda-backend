@@ -26,6 +26,9 @@ const employerSchema = new mongoose.Schema({
   cnicFront: { type: String, default: null },
   cnicBack: { type: String, default: null },
   cvFile: { type: String, default: null },
+
+    otp: { type: String },
+    otpExpire: { type: Date },
 }, { timestamps: true });
 
 employerSchema.pre('save', async function (next) {
