@@ -5,7 +5,8 @@ const upload = require('../middleware/upload'); // your current multer setup
 const {
   applyToJob,
   getApplicationsByJobId,
-  getMyApplications
+  getMyApplications,
+  updateApplicationStatus
 } = require('../controllers/jobApplication.controller');
 
 // -----------------------------
@@ -20,5 +21,9 @@ router.get('/job/:jobId/applications', protect, getApplicationsByJobId);
 
 // Get all jobs the logged-in user has applied to
 router.get('/my-applications', protect, getMyApplications);
+
+//Toggle Job Status
+router.patch('/:applicationId/status', protect, updateApplicationStatus);
+
 
 module.exports = router;

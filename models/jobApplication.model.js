@@ -8,20 +8,17 @@ const jobApplicationSchema = new mongoose.Schema({
     city: { type: String, required: true, trim: true },
     phoneNo: { type: String, required: true, trim: true },
 
-    applicationStatus: { type: String, enum: ['applied', 'under review', 'interview scheduled', 'rejected', 'hired'], default: 'applied' },
+    applicationStatus: {
+  type: String,
+  enum: ['applied', 'interviewed', 'appointment_sent', 'hired', 'rejected'],
+  default: 'applied'
+},
 
-    // Experience Details
-    jobTitle: { type: String, required: true, trim: true },
-    companyName: { type: String, required: true, trim: true },
-    startDate: { type: Date, required: true },
-    endDate: { type: Date },
+    jobTitle: { type: String, trim: true },
+
+    experience: { type: String, required: true, trim: true },
     description: { type: String, required: true, trim: true },
 
-    // Education Details
-    highestEducation: { type: String, required: true, trim: true },
-    institutionName: { type: String, required: true, trim: true },
-    graduationYear: { type: Number, required: true },
-    cgpa: { type: String, trim: true },
 
     // Portfolio Links
     portfolioLink: { type: String, trim: true },
@@ -30,6 +27,7 @@ const jobApplicationSchema = new mongoose.Schema({
     resumeFile: { type: String, required: true },
     aiCvScore: { type: Number, default: 0 },
     jobMatchScore: { type: Number, default: 0 },
+    feedback: { type: String, trim: true }
 }, { timestamps: true });
 
 const JobApplication = mongoose.model('JobApplication', jobApplicationSchema);

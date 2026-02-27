@@ -143,6 +143,8 @@ async function calculateJobMatchScore(cvText, jobText) {
   }
 }
 
+
+
 // -----------------------------
 // Unified AI scoring
 // -----------------------------
